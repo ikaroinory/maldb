@@ -32,15 +32,17 @@ total_count_sql = '''
     where sha256 in (select sha256 from download_info);
 '''
 category_statistic_sql = '''
-    select coalesce(threat_category, 'unknown') as `Threat Category`,
-           count(*)                             as Count
+    select coalesce(threat_category, 'unknown')             as `Threat Category`,
+           count(*)                                         as Count,
+           round(count(*) * 1.0 / sum(count(*)) over (), 4) as Percentage
     from malware_info
     where sha256 in (select sha256 from download_info)
     group by threat_category;
 '''
 name_statistic_sql = '''
-    select coalesce(threat_name, 'unknown') as `Threat Name`,
-           count(*)                         as Count
+    select coalesce(threat_name, 'unknown')                 as `Threat Name`,
+           count(*)                                         as `Count`,
+           round(count(*) * 1.0 / sum(count(*)) over (), 4) as Percentage
     from malware_info
     where sha256 in (select sha256 from download_info)
     group by threat_name;
@@ -51,7 +53,7 @@ def export(db_path: str, path: str | None) -> None:
     if path is None:
         path = get_export_path()
 
-    excel_path = f'{path}/export_info.maldb.xlsx'
+    excel_path = Path(path) / 'export_info.maldb.xlsx'
 
     with sqlite3.connect(db_path) as conn:
         malware_info_df = pd.read_sql_query(malware_info_sql, conn)
@@ -63,7 +65,7 @@ def export(db_path: str, path: str | None) -> None:
         malware_info_df.to_excel(writer, sheet_name='Malware Samples Information', index=False)
         total_count_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=1)
         category_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=3)
-        name_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=6)
+        name_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=7)
 
         courier_new_font = Font(name='Courier New', size=12)
         courier_new_bold_font = Font(name='Courier New', size=12, bold=True)
@@ -117,5 +119,10 @@ def export(db_path: str, path: str | None) -> None:
         for cell in ws[2]:
             cell.font = courier_new_bold_font
             cell.alignment = center_alignment
+
+        for cell in ws['F']:
+            cell.number_format = '0.00%'
+        for cell in ws['J']:
+            cell.number_format = '0.00%'
 
     print(f'Exported {excel_path} successfully.')

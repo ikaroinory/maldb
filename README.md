@@ -24,7 +24,7 @@ conda activate maldb
 3. Run the MalDB
 
 ```bash
-git clone https://github.com/ikaroinory/MalwareDB.git
+git clone https://github.com/ikaroinory/maldb.git
 cd maldb
 pip install -r requirements.txt
 python main.py

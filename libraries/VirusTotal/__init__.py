@@ -1,0 +1,1 @@
+from libraries.VirusTotal.VirusTotalRecorder import VirusTotalRecorder

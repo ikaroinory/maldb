@@ -30,7 +30,11 @@ class VirusShare(ApiKey, SampleDownloader):
         return f'{self.api}/{api_method.value}?apikey={api_key}&hash={hash_value}'
 
     def download_by_sha256(self, api_key: str, sha256: str) -> bool:
-        response = requests.post(self._get_url(VirusShare.ApiMethod.DOWNLOAD, api_key, sha256))
+        try:
+            response = requests.post(self._get_url(VirusShare.ApiMethod.DOWNLOAD, api_key, sha256))
+        except requests.exceptions.SSLError:
+            print('[Error] SSLError: Max retries exceeded.')
+            return False
 
         if response.status_code == 404:
             print(f'[Error] File not found in VirusShare: {sha256}')

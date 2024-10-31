@@ -1,7 +1,6 @@
 import json
 import sqlite3
 from pathlib import Path
-from typing import List
 
 from path import db_dir_path, download_path, main_path
 
@@ -33,92 +32,6 @@ default_config: dict = {
     }
 }
 
-sql_list: List[str] = [
-    '''
-        create table if not exists malware_info (
-            sha256                           text primary key,
-            sha1                             text unique,
-            md5                              text unique,
-            tlsh                             text,
-            permhash                         text,
-        
-            name                             text,
-            type                             text,
-            size                             integer,
-        
-            threat_category                  text,
-            threat_name                      text,
-            threat_label                     text,
-        
-            first_submission_date_VirusTotal datetime,
-            last_submission_date_VirusTotal  datetime,
-            last_analysis_date_VirusTotal    datetime,
-        
-            source                           text not null
-        );
-    ''',
-    '''
-        create table if not exists malware_tag (
-            sha256 text primary key,
-            tag    text not null,
-            constraint malware_tag_sha256_tag_unique
-                unique (sha256, tag)
-        );
-    ''',
-    '''
-        create table if not exists malware_type (
-            sha256 text primary key,
-            type   text not null,
-            constraint malware_type_sha256_type_unique
-                unique (sha256, type)
-        );
-    ''',
-    '''
-        create table if not exists malware_threat_name (
-            sha256 text primary key,
-            name   text    not null,
-            count  integer not null
-        );
-    ''',
-    '''
-        create table if not exists malware_threat_category (
-            sha256   text primary key,
-            category text    not null,
-            count    integer not null
-        );
-    ''',
-    '''
-        create table if not exists download_info (
-            sha256        text primary key,
-            download_time datetime,
-            file_path     text,
-            source        text not null
-        );
-    ''',
-    # '''
-    #     create table if not exists androguard_result (
-    #         sha256             text primary key,
-    #         package_name       text,
-    #         main_activity_name text,
-    #         sample_type        text,
-    #
-    #         androguard_version text,
-    #         is_error           integer,
-    #
-    #         min_sdk_version    text,
-    #         target_skd_version text
-    #     );
-    # ''',
-    '''
-        create table if not exists not_found_info (
-            sha256 text primary key,
-            source text not null,
-            constraint not_found_info_sha256_source_unique
-                unique (sha256, source)
-        );
-    '''
-]
-
 
 def create_dir() -> None:
     Path(main_path).mkdir(exist_ok=True)
@@ -139,10 +52,11 @@ def create_db() -> None:
     if Path(db_path).exists():
         return
 
+    with open('../sql/init.sql', 'r') as file:
+        sql_script = file.read()
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        for sql in sql_list:
-            cursor.execute(sql)
+        cursor.executescript(sql_script)
         cursor.close()
 
     print(f'Main database created at "{db_path}".')

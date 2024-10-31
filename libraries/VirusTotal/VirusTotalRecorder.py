@@ -25,12 +25,22 @@ class VirusTotalRecorder(ApiKey):
         except requests.exceptions.SSLError:
             print('[Error] SSLError: Max retries exceeded.')
             return False
+        except requests.exceptions.ProxyError:
+            print('[Error] ProxyError: Max retries exceeded.')
+            return False
+        except requests.exceptions.ConnectionError:
+            print('[Error] Connection aborted.')
+            return False
 
         if response.status_code == 429:
             print(f'[Error] 429 Quota Exceeded (from VirusTotal {key}).')
             print('    You have consumed your Daily VT API calls.')
             print('    Please wait for a while before trying again.')
             return False
+
+        if 'data' not in response.json():
+            print(f'[Error] File {sha256} not found.')
+            return True
 
         data = response.json()['data']
 

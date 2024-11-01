@@ -52,7 +52,7 @@ def create_db() -> None:
     if Path(db_path).exists():
         return
 
-    with open('../sql/init.sql', 'r') as file:
+    with open('./sql/init.sql', 'r') as file:
         sql_script = file.read()
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()

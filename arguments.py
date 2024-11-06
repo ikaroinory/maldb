@@ -41,5 +41,4 @@ config_set_parser = config_subparser.add_parser('set', help='Configure the datab
 config_set_parser.add_argument('key', type=str)
 config_set_parser.add_argument('value', type=str)
 
-
 args = parser.parse_args()

@@ -21,7 +21,7 @@ create table if not exists malware_info (
 );
 
 create table if not exists malware_tag (
-    sha256 text primary key,
+    sha256 text not null,
     tag    text not null,
 
     constraint malware_tag_sha256_tag_unique
@@ -29,7 +29,7 @@ create table if not exists malware_tag (
 );
 
 create table if not exists malware_type (
-    sha256 text primary key,
+    sha256 text not null,
     type   text not null,
 
     constraint malware_type_sha256_type_unique
@@ -37,13 +37,13 @@ create table if not exists malware_type (
 );
 
 create table if not exists malware_threat_name (
-    sha256 text primary key,
+    sha256 text not null,
     name   text    not null,
     count  integer not null
 );
 
 create table if not exists malware_threat_category (
-    sha256   text primary key,
+    sha256   text not null,
     category text    not null,
     count    integer not null
 );

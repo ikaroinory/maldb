@@ -7,7 +7,7 @@ from path import get_lib, get_db_path
 
 def record_downloaded_samples(malware_path: str):
     path = Path(malware_path)
-    sha256_list = [(file.stem, 'now', 'localtime', malware_path) for file in path.iterdir() if len(file.stem) == 64]
+    sha256_list = [(file.stem, 'now', 'localtime', malware_path, 'Local') for file in path.iterdir() if len(file.stem) == 64]
 
     if not sha256_list:
         return
@@ -15,7 +15,7 @@ def record_downloaded_samples(malware_path: str):
     with sqlite3.connect(get_db_path()) as conn:
         cursor = conn.cursor()
         cursor.executemany(
-            'insert or ignore into download_info values (?, datetime(?, ?), ?)',
+            'insert or ignore into download_info values (?, datetime(?, ?), ?, ?)',
             sha256_list
         )
         cursor.execute('''

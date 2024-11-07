@@ -16,7 +16,7 @@ def sha256_md52sha256(path: str) -> None:
         if not file.is_file():
             continue
         sha256, md5 = file.name.split('.')
-        file.rename(f'{sha256}.apk')
+        file.rename(path / f'{sha256}.apk')
 
 
 if __name__ == '__main__':

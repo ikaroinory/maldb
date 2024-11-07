@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from datetime import datetime
 from typing import List
@@ -39,10 +40,20 @@ class VirusTotalRecorder(ApiKey):
             return False
 
         if 'data' not in response.json():
-            print(f'[Error] File {sha256} not found.')
+            if 'User is banned' in str(response.json()):
+                print(f'[Error] API key {key} is banned.')
+                return False
+            else:
+                print(f'[Error] File {sha256} not found.')
+            # with sqlite3.connect(self.db_path) as conn:
+            #     cursor = conn.cursor()
+            #     cursor.execute('insert into not_found_info values (?, ?)', (sha256, 'VirusTotal'))
+            #     cursor.close()
             return True
 
         data = response.json()['data']
+        with open('test.json', 'w') as f:
+            f.write(json.dumps(data, indent=4))
 
         get_max_member = lambda lst: max(lst, key=lambda x: x['count'])['value'] if lst else None
 
@@ -93,9 +104,9 @@ class VirusTotalRecorder(ApiKey):
                     threat_name                      = coalesce(threat_name, ?),
                     threat_label                     = coalesce(threat_label, ?),
                 
-                    first_submission_date_VirusTotal = coalesce(first_submission_date_VirusTotal, ?),
-                    last_submission_date_VirusTotal  = coalesce(last_submission_date_VirusTotal, ?),
-                    last_analysis_date_VirusTotal    = coalesce(last_analysis_date_VirusTotal, ?)
+                    first_submission_date_virustotal = coalesce(first_submission_date_virustotal, ?),
+                    last_submission_date_virustotal  = coalesce(last_submission_date_virustotal, ?),
+                    last_analysis_date_virustotal    = coalesce(last_analysis_date_virustotal, ?)
                 where sha256 = ?;
             ''', malware_info)
             cursor.executemany('insert or ignore into malware_tag(sha256, tag) values (?, ?)', malware_tag)
@@ -110,7 +121,7 @@ class VirusTotalRecorder(ApiKey):
     def record(self) -> None:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute('select sha256 from malware_info where first_submission_date_VirusTotal is null')
+            cursor.execute('select sha256 from malware_info where first_submission_date_virustotal is null and sha256 not in (select sha256 from not_found_info where source = ?)', ('VirusTotal',))
             sha256_list = cursor.fetchall()
             cursor.close()
 

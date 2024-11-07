@@ -27,11 +27,11 @@ from path import get_export_path
 #     where sha256 in (select sha256 from download_info);
 # '''
 malware_info_sql = '''
-    select malware_info.sha256              as sha256,
-           sha1                             as sha1,
-           md5                              as md5,
-           tlsh                             as tlsh,
-           permhash                         as permhash,
+    select malware_info.sha256              as `SHA256`,
+           sha1                             as `SHA1`,
+           md5                              as `MD5`,
+           tlsh                             as `TLSH`,
+           permhash                         as `Permhash`,
            name                             as `Sample Name`,
            type                             as `Sample Type`,
            size                             as `Sample Size`,
@@ -64,16 +64,16 @@ total_count_sql = '''
 '''
 category_statistic_sql = '''
     select coalesce(threat_category, 'unknown')             as `Threat Category 2`,
-           count(*)                                         as count,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as percentage
+           count(*)                                         as `Count`,
+           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
     from malware_info
     where sha256 in (select sha256 from download_info)
     group by threat_category;
 '''
 category2_statistic_sql = '''
     select coalesce(category_second, 'unknown')             as `Threat Category`,
-           count(*)                                         as count,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as percentage
+           count(*)                                         as `Count`,
+           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
     from (with rankedcategories as (select mtc.sha256,
                                            mtc.category,
                                            mtc.count,
@@ -92,7 +92,7 @@ category2_statistic_sql = '''
 name_statistic_sql = '''
     select coalesce(threat_name, 'unknown')                 as `Threat Name`,
            count(*)                                         as `Count`,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as percentage
+           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
     from malware_info
     where sha256 in (select sha256 from download_info)
     group by threat_name;

@@ -7,25 +7,6 @@ from openpyxl.utils import get_column_letter
 
 from path import get_export_path
 
-# malware_info_sql = '''
-#     select sha256                           as SHA256,
-#            sha1                             as SHA1,
-#            md5                              as MD5,
-#            tlsh                             as TLSH,
-#            permhash                         as Permhash,
-#            name                             as `Sample Name`,
-#            type                             as `Sample Type`,
-#            size                             as `Sample Size`,
-#            threat_category                  as `Threat Category`,
-#            threat_name                      as `Threat Name`,
-#            threat_label                     as `Threat Label`,
-#            first_submission_date_VirusTotal as `First Submission Date (VirusTotal)`,
-#            last_submission_date_VirusTotal  as `Last Submission Date (VirusTotal)`,
-#            last_analysis_date_VirusTotal    as `Last Analysis Date (VirusTotal)`,
-#            source                           as `Sample Source`
-#     from malware_info
-#     where sha256 in (select sha256 from download_info);
-# '''
 malware_info_sql = '''
     select malware_info.sha256              as `SHA256`,
            sha1                             as `SHA1`,
@@ -43,17 +24,23 @@ malware_info_sql = '''
            last_submission_date_virustotal  as `Last Submission Date (VirusTotal)`,
            last_analysis_date_virustotal    as `Last Analysis Date (VirusTotal)`,
            source                           as `Sample Source`
-    from malware_info,
-         (with rankedcategories as (select mtc.sha256,
-                                           mtc.category,
-                                           mtc.count,
-                                           rank() over (partition by mtc.sha256 order by mtc.count desc) as rank
-                                    from malware_threat_category mtc
-                                    where mtc.sha256 in (select sha256 from malware_info))
-          select sha256,
-                 max(case when rank = 2 then category end) as category_second
-          from rankedcategories
-          group by sha256) other
+    from malware_info, (
+            with mtcr as (
+                with mtc as (
+                    select distinct *
+                    from malware_threat_category
+                    where sha256 in (select sha256 from malware_info)
+                )
+                select *,
+                     rank() over (partition by sha256 order by count desc) as rank
+                from mtc
+            )
+            select sha256,
+                   max(case when rank = 1 then category end) as category_first,
+                   max(case when rank = 2 then category end) as category_second
+            from mtcr
+            group by sha256
+         ) other
     where malware_info.sha256 == other.sha256
       and malware_info.sha256 in (select sha256 from download_info);
 '''
@@ -63,7 +50,7 @@ total_count_sql = '''
     where sha256 in (select sha256 from download_info);
 '''
 category_statistic_sql = '''
-    select coalesce(threat_category, 'unknown')             as `Threat Category 2`,
+    select coalesce(threat_category, 'unknown')             as `Threat Category`,
            count(*)                                         as `Count`,
            round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
     from malware_info
@@ -71,23 +58,29 @@ category_statistic_sql = '''
     group by threat_category;
 '''
 category2_statistic_sql = '''
-    select coalesce(category_second, 'unknown')             as `Threat Category`,
+    select coalesce(category_second, 'unknown')             as `Threat Category 2`,
            count(*)                                         as `Count`,
            round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
-    from (with rankedcategories as (select mtc.sha256,
-                                           mtc.category,
-                                           mtc.count,
-                                           rank() over (partition by mtc.sha256 order by mtc.count desc) as rank
-                                    from malware_threat_category mtc
-                                    where mtc.sha256 in (select sha256 from malware_info))
-          select sha256,
-                 max(case when rank = 1 then category end) as category_first,
-                 max(case when rank = 2 then category end) as category_second
-          from rankedcategories
-          group by sha256
-          having category_first = 'trojan')
+    from (
+            with mtcr as (
+                with mtc as (
+                    select distinct *
+                    from malware_threat_category
+                    where sha256 in (select sha256 from malware_info)
+                )
+                select *,
+                     rank() over (partition by sha256 order by count desc) as rank
+                from mtc
+            )
+            select sha256,
+                   max(case when rank = 1 then category end) as category_first,
+                   max(case when rank = 2 then category end) as category_second
+            from mtcr
+            group by sha256
+            having category_first = 'trojan'
+    )
     where sha256 in (select sha256 from download_info)
-    group by category_second;
+    group by category_second
 '''
 name_statistic_sql = '''
     select coalesce(threat_name, 'unknown')                 as `Threat Name`,

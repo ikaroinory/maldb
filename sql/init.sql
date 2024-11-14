@@ -55,10 +55,22 @@ create table if not exists download_info (
     source        text not null
 );
 
+create table if not exists info_download_info (
+    sha256        text primary key,
+    download_time datetime,
+    file_path     text,
+    source        text not null
+);
+
 create table if not exists not_found_info (
     sha256 text primary key,
     source text not null,
 
     constraint not_found_info_sha256_source_unique
         unique (sha256, source)
+);
+
+create table if not exists category_name_mapping (
+    name     text primary key,
+    category text not null
 );

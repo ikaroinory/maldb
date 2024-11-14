@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 
 from libraries.VirusTotal import VirusTotalRecorder
-from path import get_lib, get_db_path
+from path import get_db_path, get_info_path, get_lib
 
 
 def record_downloaded_samples(malware_path: str):
@@ -31,4 +31,4 @@ def record(malware_path: str | None):
     if malware_path is not None:
         record_downloaded_samples(malware_path)
     else:
-        VirusTotalRecorder(get_lib()['VirusTotal']['api'], get_lib()['VirusTotal']['key'], get_db_path()).record()
+        VirusTotalRecorder(get_lib()['VirusTotal']['api'], get_lib()['VirusTotal']['key'], get_db_path(), get_info_path()).record()

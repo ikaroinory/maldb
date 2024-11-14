@@ -11,7 +11,8 @@ default_config: dict = {
     'path': {
         'db': db_path,
         'download': download_path,
-        'export': download_path
+        'export': download_path,
+        'info': download_path
     },
     'lib': {
         'MalwareBazaar': {

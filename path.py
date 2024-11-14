@@ -28,3 +28,7 @@ def get_download_path() -> str:
 
 def get_export_path() -> str:
     return __get_config__()['path']['export']
+
+
+def get_info_path() -> str:
+    return __get_config__()['path']['info']

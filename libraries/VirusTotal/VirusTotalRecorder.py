@@ -9,10 +9,11 @@ from libraries.utils import ApiKey
 
 
 class VirusTotalRecorder(ApiKey):
-    def __init__(self, api: str, key_list: List[str], db_path: str):
+    def __init__(self, api: str, key_list: List[str], db_path: str, info_path: str):
         super().__init__(key_list)
         self.api = api
         self.db_path = db_path
+        self.info_path = info_path
 
     def _record_by_sha256(self, key: str, sha256: str) -> bool:
         api = f'{self.api}/files/{sha256}'
@@ -25,7 +26,7 @@ class VirusTotalRecorder(ApiKey):
             response = requests.get(api, headers=headers)
         except requests.exceptions.SSLError:
             print('[Error] SSLError: Max retries exceeded.')
-            return False
+            return True
         except requests.exceptions.ProxyError:
             print('[Error] ProxyError: Max retries exceeded.')
             return False
@@ -52,7 +53,7 @@ class VirusTotalRecorder(ApiKey):
             return True
 
         data = response.json()['data']
-        with open('test.json', 'w') as f:
+        with open(f'{self.info_path}\\{sha256}.json', 'w') as f:
             f.write(json.dumps(data, indent=4))
 
         get_max_member = lambda lst: max(lst, key=lambda x: x['count'])['value'] if lst else None
@@ -89,6 +90,7 @@ class VirusTotalRecorder(ApiKey):
                 (data['attributes']['sha256'], item['value'], item['count'])
                 for item in data['attributes'].get('popular_threat_classification', {}).get('popular_threat_name', [])
             ]
+            info_download_info = (sha256, 'now', 'localtime', self.info_path, 'VirusTotal')
             cursor.execute('''
                 update malware_info
                 set sha1                             = coalesce(sha1, ?),
@@ -114,6 +116,7 @@ class VirusTotalRecorder(ApiKey):
             cursor.executemany('insert or ignore into malware_threat_category(sha256, category, count) values (?, ?, ?)',
                                malware_threat_category)
             cursor.executemany('insert or ignore into malware_threat_name(sha256, name, count) values (?, ?, ?)', malware_threat_name)
+            cursor.execute('insert or ignore into info_download_info values(?, datetime(?, ?), ?, ?)', info_download_info)
             cursor.close()
 
         return True

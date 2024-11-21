@@ -7,89 +7,18 @@ from openpyxl.utils import get_column_letter
 
 from path import get_export_path
 
-malware_info_sql = '''
-    select malware_info.sha256              as `SHA256`,
-           sha1                             as `SHA1`,
-           md5                              as `MD5`,
-           tlsh                             as `TLSH`,
-           permhash                         as `Permhash`,
-           name                             as `Sample Name`,
-           type                             as `Sample Type`,
-           size                             as `Sample Size`,
-           threat_category                  as `Threat Category`,
-           category_second                  as `Threat Category 2`,
-           threat_name                      as `Threat Name`,
-           threat_label                     as `Threat Label`,
-           first_submission_date_virustotal as `First Submission Date (VirusTotal)`,
-           last_submission_date_virustotal  as `Last Submission Date (VirusTotal)`,
-           last_analysis_date_virustotal    as `Last Analysis Date (VirusTotal)`,
-           source                           as `Sample Source`
-    from malware_info, (
-            with mtcr as (
-                with mtc as (
-                    select distinct *
-                    from malware_threat_category
-                    where sha256 in (select sha256 from malware_info)
-                )
-                select *,
-                     rank() over (partition by sha256 order by count desc) as rank
-                from mtc
-            )
-            select sha256,
-                   max(case when rank = 1 then category end) as category_first,
-                   max(case when rank = 2 then category end) as category_second
-            from mtcr
-            group by sha256
-         ) other
-    where malware_info.sha256 == other.sha256
-      and malware_info.sha256 in (select sha256 from download_info);
-'''
-total_count_sql = '''
-    select count(*) as `Total Count`
-    from malware_info
-    where sha256 in (select sha256 from download_info);
-'''
-category_statistic_sql = '''
-    select coalesce(threat_category, 'unknown')             as `Threat Category`,
-           count(*)                                         as `Count`,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
-    from malware_info
-    where sha256 in (select sha256 from download_info)
-    group by threat_category;
-'''
-category2_statistic_sql = '''
-    select coalesce(category_second, 'unknown')             as `Threat Category 2`,
-           count(*)                                         as `Count`,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
-    from (
-            with mtcr as (
-                with mtc as (
-                    select distinct *
-                    from malware_threat_category
-                    where sha256 in (select sha256 from malware_info)
-                )
-                select *,
-                     rank() over (partition by sha256 order by count desc) as rank
-                from mtc
-            )
-            select sha256,
-                   max(case when rank = 1 then category end) as category_first,
-                   max(case when rank = 2 then category end) as category_second
-            from mtcr
-            group by sha256
-            having category_first = 'trojan'
-    )
-    where sha256 in (select sha256 from download_info)
-    group by category_second
-'''
-name_statistic_sql = '''
-    select coalesce(threat_name, 'unknown')                 as `Threat Name`,
-           count(*)                                         as `Count`,
-           round(count(*) * 1.0 / sum(count(*)) over (), 4) as `Percentage`
-    from malware_info
-    where sha256 in (select sha256 from download_info)
-    group by threat_name;
-'''
+with open('./sql/malware_info.sql', 'r') as file:
+    malware_info_sql = file.read()
+with open('./sql/total_count.sql', 'r') as file:
+    total_count_sql = file.read()
+with open('./sql/category1_statistic.sql', 'r') as file:
+    category1_statistic_sql = file.read()
+with open('./sql/category2_statistic.sql', 'r') as file:
+    category2_statistic_sql = file.read()
+with open('./sql/category3_statistic.sql', 'r') as file:
+    category3_statistic_sql = file.read()
+with open('./sql/name_statistic.sql', 'r') as file:
+    name_statistic_sql = file.read()
 
 
 def export(db_path: str, path: str | None) -> None:
@@ -101,17 +30,19 @@ def export(db_path: str, path: str | None) -> None:
     with sqlite3.connect(db_path) as conn:
         malware_info_df = pd.read_sql_query(malware_info_sql, conn)
         total_count_df = pd.read_sql_query(total_count_sql, conn)
-        category_statistic_df = pd.read_sql_query(category_statistic_sql, conn)
+        category1_statistic_df = pd.read_sql_query(category1_statistic_sql, conn)
         category2_statistic_df = pd.read_sql_query(category2_statistic_sql, conn)
+        category3_statistic_df = pd.read_sql_query(category3_statistic_sql, conn)
         name_statistic_df = pd.read_sql_query(name_statistic_sql, conn)
 
     with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
         malware_info_df.to_excel(writer, sheet_name='Malware Samples Information', index=False)
         total_count_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=1)
-        category_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=3)
-        category_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=3)
+        category1_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=3)
+        category1_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=3)
         category2_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=7)
-        name_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=11)
+        category3_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=11)
+        name_statistic_df.to_excel(writer, sheet_name='Statistic', index=False, startrow=1, startcol=15)
 
         courier_new_font = Font(name='Courier New', size=12)
         courier_new_bold_font = Font(name='Courier New', size=12, bold=True)

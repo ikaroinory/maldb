@@ -99,15 +99,11 @@ def export(db_path: str, path: str | None) -> None:
 
         for cell in ws['F']:
             cell.number_format = '0.00%'
-            cell.border = border
         for cell in ws['J']:
             cell.number_format = '0.00%'
-            cell.border = border
         for cell in ws['N']:
             cell.number_format = '0.00%'
-            cell.border = border
         for cell in ws['R']:
             cell.number_format = '0.00%'
-            cell.border = border
 
     print(f'Exported {excel_path} successfully.')

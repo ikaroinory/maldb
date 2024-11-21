@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 
 import pandas as pd
+from openpyxl.drawing.geometry import AdjPoint2D
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 
@@ -54,6 +55,7 @@ def export(db_path: str, path: str | None) -> None:
         ws = wb['Malware Samples Information']
 
         ws.sheet_view.showGridLines = False
+        ws.freeze_panes = 'B2'
         ws.auto_filter.ref = f'A1:{get_column_letter(ws.max_column)}{ws.max_row}'
 
         column_index = 1

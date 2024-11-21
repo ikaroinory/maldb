@@ -20,6 +20,7 @@ download_parser = command_subparser.add_parser('download', aliases=['d'],
 # Record command
 record_parser = command_subparser.add_parser('record', aliases=['r'], help='Record malware samples to the database.')
 record_parser.add_argument('-p', '--path', type=str, help='Path to the malware sample.')
+record_parser.add_argument('-l', '--list', type=str, help='SHA256 json list path.')
 
 # Export command
 export_parser = command_subparser.add_parser('export', aliases=['e'], help='Export malware samples from the database.')

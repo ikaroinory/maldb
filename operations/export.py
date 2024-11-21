@@ -53,6 +53,7 @@ def export(db_path: str, path: str | None) -> None:
         wb = writer.book
         ws = wb['Malware Samples Information']
 
+        ws.sheet_view.showGridLines = False
         ws.auto_filter.ref = f'A1:{get_column_letter(ws.max_column)}{ws.max_row}'
 
         column_index = 1
@@ -75,13 +76,15 @@ def export(db_path: str, path: str | None) -> None:
             cell.alignment = center_alignment
 
         ws = wb['Statistic']
+
+        ws.sheet_view.showGridLines = False
         column_index = 1
         for column in ws.columns:
             max_len = 0
             column_letter = column[0].column_letter
             for cell in column:
                 cell.font = courier_new_font
-                if cell.value:
+                if cell.value is not None:
                     max_len = max(max_len, len(str(cell.value)))
 
             ws.column_dimensions[column_letter].width = max_len * 1.5
@@ -91,7 +94,7 @@ def export(db_path: str, path: str | None) -> None:
 
         for column in ws.columns:
             for cell in column:
-                if cell.value:
+                if cell.value is not None:
                     cell.border = border
         for cell in ws[2]:
             cell.font = courier_new_bold_font

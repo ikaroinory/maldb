@@ -11,7 +11,7 @@ def run(cmd: str) -> None:
     elif cmd in ['download', 'd']:
         download()
     elif cmd in ['record', 'r']:
-        record(args.path)
+        record(args.path, args.list)
     elif cmd in ['scan', 's']:
         scan(args.tag, args.type)
     elif cmd in ['export', 'e']:

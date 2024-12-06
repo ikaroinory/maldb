@@ -2,7 +2,6 @@ import sqlite3
 from pathlib import Path
 
 import pandas as pd
-from openpyxl.drawing.geometry import AdjPoint2D
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 

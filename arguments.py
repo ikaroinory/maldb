@@ -26,6 +26,10 @@ record_parser.add_argument('-l', '--list', type=str, help='SHA256 json list path
 export_parser = command_subparser.add_parser('export', aliases=['e'], help='Export malware samples from the database.')
 export_parser.add_argument('-p', '--path', type=str, help='Path to the malware sample.')
 
+# CT command
+export_parser = command_subparser.add_parser('ct')
+export_parser.add_argument('-p', '--path', type=str)
+
 # Configuration command
 config_parser = command_subparser.add_parser('config', aliases=['cfg'], help='Configure the database source.')
 config_subparser = config_parser.add_subparsers(dest='config_command', title='config commands', metavar='')

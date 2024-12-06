@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from arguments import args, parser
-from operations import config_add, config_check, config_get, config_set, download, export, init, record, scan
-from path import get_db_path
+from operations import config_add, config_check, config_get, config_set, ct, download, export, init, record, scan
+from path import get_db_path, get_export_path
 
 
 def run(cmd: str) -> None:
@@ -16,6 +16,8 @@ def run(cmd: str) -> None:
         scan(args.tag, args.type)
     elif cmd in ['export', 'e']:
         export(get_db_path(), args.path)
+    elif cmd in ['ct']:
+        ct(Path(args.path), Path(get_export_path()))
     elif cmd in ['config', 'cfg']:
         if args.config_command == 'check':
             config_check()
